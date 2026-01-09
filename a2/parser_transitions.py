@@ -18,15 +18,12 @@ class PartialParse(object):
         """
         # The sentence being parsed is kept for bookkeeping purposes. Do NOT alter it in your code.
         self.sentence = sentence
-
-        # 3 lines 
-        self.stack = ["ROOT"]
-        self.buffer= [word for word in self.sentence]
-        self.dependencies =[]
-        # print(f"sentence is {self.sentence}")
-        
+        # self.sentence_copy= sentence
 
         ### YOUR CODE HERE (3 Lines)
+        self.stack = ["ROOT"]
+        self.buffer = [self.sentence.split()]
+        self.dependencies =[]
         ### Your code should initialize the following fields:
         ###     self.stack: The current stack represented as a list with the top of the stack as the
         ###                 last element of the list.
@@ -58,39 +55,22 @@ class PartialParse(object):
         ###         1. Shift
         ###         2. Left Arc
         ###         3. Right Arc
-        
-        
-        # print(f"current buffer: {self.buffer}")
-        # print(f"current stack: {self.buffer}")
-        # print(f"current dependencies: {self.buffer}")
-        
-        # print(f"current transition: {transition}")
-        if transition=="S":
-            
-            if len(self.buffer)>0: # buffer is not empty 
-                self.stack.append(self.buffer[0])
-                self.buffer.pop(0)
-                
-
-            # ManishaIsLoveManishaIsLife -> info is important for this assignment
-        elif transition=="LA":
-            dependent=self.stack[-2]
-            head=self.stack[-1]
-            self.dependencies.append((head,dependent))
-            self.stack.pop(-2)
-        elif transition=="RA":
-            dependent=self.stack[-1]
-            head=self.stack[-2]
-            self.dependencies.append((head,dependent))
-            self.stack.pop(-1)
+        if transition =="S":
+            print(f"transition is SHIFT")
+            self.stack.append(self.buffer[0])
+            self.buffer.pop(0)
+        elif transition == "LA":
+            print(f"transition is LEFT-ARC")
+            self.dependencies.append( (self.stack[0],self.stack[1]) ) # (head, dependent)
+            self.stack.pop(1)
+        elif transition =="RA":
+            print(f"transition is RIGHT-ARC")
+            self.dependencies.append( (self.stack[1],self.stack[0]) ) # (head, dependent)
+            self.stack.pop(0)
 
 
         ### END YOUR CODE
-        
-        # print(f"After transition buffer: {self.buffer}")
-        # print(f"After transition stack: {self.stack}")
-        # print(f"After transition dependencies: {self.dependencies}")
-        
+
     def parse(self, transitions):
         """Applies the provided transitions to this PartialParse
 
@@ -126,6 +106,38 @@ def minibatch_parse(sentences, model, batch_size):
     dependencies = []
 
     ### YOUR CODE HERE (~8-10 Lines)
+    partial_parses=[]
+    i=0
+    
+    partial_parses=list (PartialParse(sentence=sentence)for sentence in sentences)
+    unfinished_pareses=partial_parses
+    transitions=[]
+    done=False
+    # total_parse=len(unfinished_pareses)
+    while len(unfinished_pareses)!=0:
+        total_parse=len(unfinished_pareses)
+        
+        for crnt_parse in range(0,total_parse, batch_size):
+            # end=min(crnt_parse+batch_size, total_parse)
+            if crnt_parse+batch_size<= total_parse: mini_batch_size=batch_size
+            else: mini_batch_size = min(crnt_parse+batch_size, total_parse)
+
+
+            for x in range(mini_batch_size):
+            # transitions = model.predict(partial_parses)
+            
+                transition=model.predict(partial_parses[crnt_parse+x])
+                partial_parses[crnt_parse+x].parse(transitions=transition)
+                transitions.append(transition)
+                # do the parse step
+                if len(partial_parses[crnt_parse+x].stack)==1:
+                    dependencies.append(partial_parses[crnt_parse+x].dependencies)
+                    unfinished_pareses.pop(crnt_parse+x)
+                    transitions.pop(crnt_parse+x)
+                    
+        
+
+
     ### TODO:
     ###     Implement the minibatch parse algorithm.  Note that the pseudocode for this algorithm is given in the pdf handout.
     ###
