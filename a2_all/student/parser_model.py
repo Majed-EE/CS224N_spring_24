@@ -45,14 +45,14 @@ class ParserModel(nn.Module):
         self.n_classes = n_classes
         self.dropout_prob = dropout_prob
         self.embed_size = embeddings.shape[1]
-        self.hidden_size = hidden_size
+        self.hidden_size = hidden_size 
         self.embeddings = nn.Parameter(torch.tensor(embeddings))
         
 
         ### YOUR CODE HERE (~9-10 Lines)
         ### TODO:
         self.embd_to_hidden_bias = nn.Parameter(torch.empty(self.hidden_size))
-        self.embd_to_hidden_weight = nn.Parameter(torch.empty(self.hidden_size,self.embed_size))
+        self.embd_to_hidden_weight = nn.Parameter(torch.empty(self.hidden_size,self.embed_size*self.n_features))
         nn.init.xavier_uniform_(self.embd_to_hidden_weight)
         nn.init.uniform_(self.embd_to_hidden_bias, a=0, b=1) # a and b likely mean and bias
         self.dropout=nn.Dropout(p=dropout_prob)
@@ -102,7 +102,7 @@ class ParserModel(nn.Module):
         #     for feature in range (n_features):
         #         x[batch][feature]= self.embeddings[w[batch][feature]]
 
-        x=self.embeddings[w].view(w.shape[0], w.shape[1],-1) # w.shape[0] = batch_size
+        x=self.embeddings[w].view(w.shape[0], -1) # w.shape[0] = batch_size
         ### YOUR CODE HERE (~1-4 Lines)
         ### TODO:
         ###     1) For each index `i` in `w`, select `i`th vector from self.embeddings
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     embeddings = np.zeros((100, 30), dtype=np.float32)
     model = ParserModel(embeddings)
-    args.forward =True
+    # args.forward =True    
 
     def check_embedding():
         inds = torch.randint(0, 100, (4, 36), dtype=torch.long)
